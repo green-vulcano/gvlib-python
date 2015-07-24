@@ -6,6 +6,8 @@ Created on Jul 21, 2015
 
 import abc
 
+from . import mixins
+
 class DeviceInfo(object):
     '''
     Holds the info about a specific device (i.e. the board on which this
@@ -29,49 +31,44 @@ class DeviceInfo(object):
     @property
     def port(self): return self.__port
 
-
         
 
-class GVComm(object):
+class GVComm(mixins._DeviceInfo):
     '''
     Main entry point for GVLib.
     '''
-
 
     def __init__(self, device_info, transport):
         '''
         Constructor
         '''
-        self.__device_info = device_info
+        mixins._DeviceInfo.__init__(self, device_info)
         self.__transport = transport
-
 
 
 class Transport(metaclass=abc.ABCMeta):
     '''
     Abstract base class for transport implementation.
     '''
-    def __init__(self, device_info):
-        self.__device_info = device_info
+    @abc.abstractclassmethod
+    def send(self, service, payload): pass
     
-    @property
-    def device_info(self): return self.__device_info
+    @abc.abstractclassmethod
+    def poll(self): pass
 
 
-class _ServerAndPort(object):
-    def __init__(self, server, port):
-        self.__server = server
-        self.__port = port;
+class Protocol(metaclass=abc.ABCMeta):
+    def __init__(self, transport):
+        self._transport = transport
         
-    @property
-    def server(self): return self.__server
+    @abc.abstractclassmethod
+    def send_device_info(self): pass
     
-    @property
-    def port(self): return self.__port
+    @abc.abstractclassmethod
+    def send_sensor_config(self, id_, name, type_): pass
     
+    @abc.abstractclassmethod
+    def send_actuator_config(self, id_, name, type_, topic): pass    
     
-
-class RestTransport(Transport, _ServerAndPort):
-    def __init__(self, device_info, server, port):
-        Transport.__init__(self, device_info)
-        _ServerAndPort.__init__(self, server, port)
+    @abc.abstractclassmethod
+    def send_sensor_data(self, id_, value): pass
