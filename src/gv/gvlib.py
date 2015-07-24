@@ -54,7 +54,7 @@ class Transport(metaclass=abc.ABCMeta):
     def send(self, service, payload): pass
     
     @abc.abstractclassmethod
-    def poll(self): pass
+    def poll(self): return False
 
 
 class Protocol(metaclass=abc.ABCMeta):

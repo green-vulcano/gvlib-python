@@ -9,7 +9,7 @@ class _ServerAndPort(object):
     '''
     Mixin to add 'server' and 'port' properties.
     '''
-    def __init__(self, server, port, writable=False):
+    def __init__(self, server, port):
         self.__server = server
         self.__port = port;
             
@@ -25,7 +25,7 @@ class _DeviceInfo(object):
     '''
     Mixin to add the 'device_info' property.
     '''
-    def __init__(self, device_info, writable=False):
+    def __init__(self, device_info):
         self.__device_info = device_info
     
     @property
