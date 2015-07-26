@@ -1,12 +1,21 @@
 '''
-Created on Jul 21, 2015
+GreenVulcano Communication Library
 
-@author: Domenico Barra <eisenach@gmail.com>
+@summary: Main Library Module
+@organization: GreenVulcano Technologies
+@license: GPL v.3
+@copyright: 2015, GreenVulcano Technologies
+@author: Domenico Barra
+@contact: eisenach@gmail.com
+
+@change: 2015-07-24 - First version
 '''
+
 
 import abc
 
 from . import mixins
+import code
 
 class DeviceInfo(object):
     '''
@@ -50,11 +59,29 @@ class Transport(metaclass=abc.ABCMeta):
     '''
     Abstract base class for transport implementation.
     '''
+    class TransportException(Exception):
+        ERRORS = { "NOT_IMPLEMENTED": 
+                  (-1, 'The requested method is not implemented')}
+
+        '''
+        Raised by methods of `Transport` when they cannot do their job
+        '''
+        def __init__(self, code, reason, lookup=None):
+            
+            if lookup:
+                code, reason = self.ERRORS[lookup]
+            
+            Exception.__init__(self, code, reason)
+            self.code = code
+            self.reason = reason
+
     @abc.abstractclassmethod
-    def send(self, service, payload): pass
+    def send(self, service, payload):
+        raise self.TransportException(lookup="NOT_IMPLEMENTED")
     
     @abc.abstractclassmethod
-    def poll(self): return False
+    def poll(self):
+        raise self.TransportException(lookup="NOT_IMPLEMENTED")
 
 
 class Protocol(metaclass=abc.ABCMeta):

@@ -1,7 +1,14 @@
 '''
-Created on Jul 24, 2015
+GreenVulcano Communication Library
 
-@author: Domenico Barra <eisenach@gmail.com>
+@summary: Rest Transport Implementation
+@organization: GreenVulcano Technologies
+@license: GPL v.3
+@copyright: 2015, GreenVulcano Technologies
+@author: Domenico Barra
+@contact: eisenach@gmail.com
+
+@change: 2015-07-24 - First version
 '''
 
 from ..gvlib import Transport
@@ -23,7 +30,7 @@ class RestTransport(Transport, _DeviceInfo, _ServerAndPort):
         resp, cont = self.__http.request(
                 "%s//%s:%d/%s" % (
                                 "https" if self.__use_https else "http",
-                                self.server, self.port, service),                            
+                                self.server, self.port, service),
                 method="POST",
                 body=payload,
                 headers = {
@@ -31,10 +38,9 @@ class RestTransport(Transport, _DeviceInfo, _ServerAndPort):
                     "Host"         : self.device_info.ip,
                     "Connection"   : "close" ## TODO: CHANGE THIS!
                 })
-        return resp['status']
-
+        if resp.status <= 200 or resp.status > 299:
+            raise self.TransportException(resp.status, resp.reason)
+    
     def poll(self):
-        return Transport.poll(self)
-
-        
+        Transport.poll(self)
     
