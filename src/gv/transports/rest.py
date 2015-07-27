@@ -38,7 +38,7 @@ class RestTransport(Transport, _DeviceInfo, _ServerAndPort):
                     "Host"         : self.device_info.ip,
                     "Connection"   : "close" ## TODO: CHANGE THIS!
                 })
-        if resp.status <= 200 or resp.status > 299:
+        if resp.status < 200 or resp.status > 299:
             raise self.TransportException(resp.status, resp.reason)
     
     def poll(self):
