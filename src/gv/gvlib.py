@@ -15,7 +15,6 @@ GreenVulcano Communication Library
 import abc
 
 from . import mixins
-import code
 
 class DeviceInfo(object):
     '''
@@ -53,6 +52,19 @@ class GVComm(mixins._DeviceInfo):
         '''
         mixins._DeviceInfo.__init__(self, device_info)
         self.__transport = transport
+        self.__callbacks = {}
+    
+    def add_callback(self, topic, cb):
+        if topic not in self.__callbacks:
+            self.__callbacks[topic] = set()
+        self.__callbacks[topic].add(cb)
+    
+    def callback(self, topic, payload):
+        s = self.__callbacks.get(topic) or self.__EMPTY_SET
+        for cb in s:
+            payload = cb(payload)
+
+    __EMPTY_SET = set()
 
 
 class Transport(metaclass=abc.ABCMeta):
