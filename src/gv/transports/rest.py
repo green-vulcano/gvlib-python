@@ -19,6 +19,7 @@ import httplib2
 class RestTransport(Transport, _DeviceInfo, _ServerAndPort):
     def __init__(self, device_info, server, port,
                  credentials=None, use_https=False, timeout=None):
+        Transport.__init__(self)
         _DeviceInfo.__init__(self, device_info)
         _ServerAndPort.__init__(self, server, port)
         self.__use_https = use_https
@@ -40,7 +41,11 @@ class RestTransport(Transport, _DeviceInfo, _ServerAndPort):
                 })
         if resp.status < 200 or resp.status > 299:
             raise self.TransportException(resp.status, resp.reason)
+        
+    ### Polling and topic subscription is not (yet) supported via REST
     
     def poll(self):
         Transport.poll(self)
-    
+        
+    def _handle_subscription(self, topic, callback):
+        Transport._handle_subscription(self, topic, callback)

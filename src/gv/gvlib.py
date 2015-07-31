@@ -46,25 +46,38 @@ class GVComm(mixins._DeviceInfo):
     Main entry point for GVLib.
     '''
 
-    def __init__(self, device_info, transport):
+    def __init__(self, device_info, transport, protocol):
         '''
         Constructor
         '''
         mixins._DeviceInfo.__init__(self, device_info)
         self.__transport = transport
-        self.__callbacks = {}
+        self.__protocol= protocol
+ 
+    def send_device_info(self):
+        self.__protocol.send_device_info()
     
-    def add_callback(self, topic, cb):
-        if topic not in self.__callbacks:
-            self.__callbacks[topic] = set()
-        self.__callbacks[topic].add(cb)
+    def send_sensor_config(self, id_, name, type_):
+        self.__protocol.send_sensor_config(id_, name, type_)
     
-    def callback(self, topic, payload):
-        s = self.__callbacks.get(topic) or self.__EMPTY_SET
-        for cb in s:
-            payload = cb(payload)
+    def send_actuator_config(self, id_, name, type_, topic, callback=None):
+        self.__protocol.send_actuator_config(id_, name, type_, topic)
+        if callback:
+            self.add_callback(topic, callback) 
+    
+    def send_sensor_data(self, id_, value):
+        self.__protocol.send_sensor_data(id_, value)
 
-    __EMPTY_SET = set()
+    def add_callback(self, topic, cb):
+        self.__transport.subscribe(topic, cb)
+        
+    def poll(self):
+        self.__transport.poll()
+        
+    def shutdown(self):
+        pass
+
+
 
 
 class Transport(metaclass=abc.ABCMeta):
@@ -86,6 +99,20 @@ class Transport(metaclass=abc.ABCMeta):
             Exception.__init__(self, code, reason)
             self.code = code
             self.reason = reason
+            
+    def __init__(self):
+        self.__callbacks = {}
+
+    def subscribe(self, topic, callback):
+        if topic not in self.__callbacks:
+            self.__callbacks[topic] = set()
+        self.__callbacks[topic].add(callback)
+        self._handle_subscription(topic, callback)
+    
+    def callback(self, topic, payload):
+        s = self.__callbacks.get(topic) or self.__EMPTY_SET
+        for cb in s:
+            payload = cb(payload)
 
     @abc.abstractclassmethod
     def send(self, service, payload):
@@ -94,6 +121,13 @@ class Transport(metaclass=abc.ABCMeta):
     @abc.abstractclassmethod
     def poll(self):
         raise self.TransportException(lookup="NOT_IMPLEMENTED")
+    
+    @abc.abstractclassmethod
+    def _handle_subscription(self, topic, callback):
+        raise self.TransportException(lookup="NOT_IMPLEMENTED")
+
+    __EMPTY_SET = set()
+
 
 
 class Protocol(metaclass=abc.ABCMeta):
