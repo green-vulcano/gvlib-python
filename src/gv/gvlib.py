@@ -1,13 +1,28 @@
+# Copyright (c) 2015, GreenVulcano Open Source Project. All rights reserved.
+#
+# This file is part of the GreenVulcano Communication Library for IoT.
+#
+# This is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# This software is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+# for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this software. If not, see <http://www.gnu.org/licenses/>.
+
+
 '''
 GreenVulcano Communication Library
+Main Library Module
 
-@summary: Main Library Module
-@organization: GreenVulcano Technologies
-@license: GPL v.3
-@copyright: 2015, GreenVulcano Technologies
 @author: Domenico Barra
 @contact: eisenach@gmail.com
-
+@license: LGPL v.3
 @change: 2015-07-24 - First version
 '''
 
@@ -18,8 +33,8 @@ from . import mixins
 
 class DeviceInfo(object):
     '''
-    Holds the info about a specific device (i.e. the board on which this
-    software is running).
+    Holds the info about a specific device (i.e. the piece of hardware
+    on which this software is running).
     '''
     def __init__(self, id_, name, ip, port):
         self.__id = id_
@@ -28,22 +43,34 @@ class DeviceInfo(object):
         self.__port = port
     
     @property
-    def id(self): return self.__id
+    def id(self):
+        '''The unique ID of the device.'''
+        return self.__id
     
     @property
-    def name(self): return self.__name
+    def name(self):
+        '''The name (better if human-readable) of the device.''' 
+        return self.__name
     
     @property
-    def ip(self): return self.__ip
+    def ip(self):
+        '''The IP address of the device.'''
+        return self.__ip
     
     @property
-    def port(self): return self.__port
+    def port(self):
+        '''The port on which this device wishes to be contacted back.'''
+        return self.__port
 
         
 
 class GVComm(mixins._DeviceInfo):
     '''
-    Main entry point for GVLib.
+    Main entry point for the GreenVulcano Communication Library for IoT.
+    This class is designed to act as a simple Façade: it merely delegates
+    the requested actions to the transport and protocol passed to its
+    constructor. This gives you a single object to interact with for
+    most practical purposes.
     '''
 
     def __init__(self, device_info, transport, protocol):
@@ -75,7 +102,7 @@ class GVComm(mixins._DeviceInfo):
         self.__transport.poll()
         
     def shutdown(self):
-        pass
+        self.__transport.shutdown()
 
 
 
@@ -121,6 +148,10 @@ class Transport(metaclass=abc.ABCMeta):
     @abc.abstractclassmethod
     def poll(self):
         raise self.TransportException(lookup="NOT_IMPLEMENTED")
+    
+    @abc.abstractclassmethod
+    def shutdown(self):
+        pass ### no need to complain, just skip
     
     @abc.abstractclassmethod
     def _handle_subscription(self, topic, callback):
