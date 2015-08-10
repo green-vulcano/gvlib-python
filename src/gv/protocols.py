@@ -61,7 +61,7 @@ class GVProtocol_v1(Protocol, _DeviceInfo):
 
     def send_actuator_config(self, id_, name, type_, topic):
         payload =  '{"id": "%d", "nm": "%s", "tp": "%s", "to": "%s"}' % (
-                    id_, name, type_)
+                    id_, name, type_, topic)
         self._transport.send( self.SERVICES['actuators'] % {
                     'device_id': self.device_info.id }, payload )
     
