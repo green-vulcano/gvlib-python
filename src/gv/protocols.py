@@ -55,18 +55,18 @@ class GVProtocol_v1(Protocol, _DeviceInfo):
 
 
     def send_sensor_config(self, id_, name, type_):
-        payload =  '{"id": "%d", "nm": "%s", "tp": "%s"}' % (id_, name, type_)
+        payload =  '{"id": "%s", "nm": "%s", "tp": "%s"}' % (id_, name, type_)
         self._transport.send( self.SERVICES['sensors'] % {
                     'device_id': self.device_info.id }, payload )
 
     def send_actuator_config(self, id_, name, type_, topic):
-        payload =  '{"id": "%d", "nm": "%s", "tp": "%s", "to": "%s"}' % (
+        payload =  '{"id": "%s", "nm": "%s", "tp": "%s", "to": "%s"}' % (
                     id_, name, type_, topic)
         self._transport.send( self.SERVICES['actuators'] % {
                     'device_id': self.device_info.id }, payload )
     
     def send_sensor_data(self, id_, val):
-        payload = '{"id": "%d", value: "%s"}' % (id_, str(val))
+        payload = '{"id": "%s", value: "%s"}' % (id_, str(val))
         self._transport.send( self.SERVICES['data'] % {
                     'device_id': self.device_info.id,
                     'sensor_id': id_ }, payload )
