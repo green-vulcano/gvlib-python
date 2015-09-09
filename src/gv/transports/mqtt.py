@@ -30,20 +30,27 @@ from ..mixins import _ServerAndPort, _DeviceInfo
 
 import paho.mqtt.client as mqtt
 
-
+######################################################################
+#
+######################################################################
 class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
     def __init__(self, device_info, server, port, clean_session=True, credentials=None, loop_wait_sec=0.1):
+        
         Transport.__init__(self)
         _DeviceInfo.__init__(self, device_info)
         _ServerAndPort.__init__(self, server, port)
+        
         self.__loop_wait_sec = loop_wait_sec
         client = mqtt.Client(device_info.id, clean_session)
+        
         if credentials:
             client.username_pw_set(credentials[0], credentials[1])
-        client.on_message = self.__on_message
-        client.connect(server, port, bind_address=device_info.ip)
-        self.__client = client
             
+        client.on_message = self.__on_message
+        client.on_connect = self.__on_connect        
+        client.connect(server, port, bind_address=device_info.ip)
+        
+        self.__client = client            
     
     def send(self, service, payload):
         self.__client.publish(service, payload)
@@ -56,7 +63,22 @@ class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
         
     def _handle_subscription(self, topic, callback):
         self.__client.subscribe(topic)
+        
+    def __on_connect(self, client, userdata, flags, rc):
+        '''
+        Called when the broker responds to our connection request.        
+            client: the client instance for this callback
+            userdata: the private user data as set in Client() or userdata_set()
+            flags: response flags sent by the brokerConnected with result code "+str(rc)
+            rc: the connection result
+                0: Connection successful 
+                1: Connection refused - incorrect protocol version 
+                2: Connection refused - invalid client identifier 
+                3: Connection refused - server unavailable 
+                4: Connection refused - bad username or password 
+                5: Connection refused - not authorised
+        '''
+        pass
 
     def __on_message(self, client, userdata, msg):
         self.callback(msg.topic, msg.payload)
-    

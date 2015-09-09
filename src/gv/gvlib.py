@@ -31,6 +31,9 @@ import abc
 
 from . import mixins
 
+######################################################################
+#
+######################################################################
 class DeviceInfo(object):
     '''
     Holds the info about a specific device (i.e. the piece of hardware
@@ -63,7 +66,9 @@ class DeviceInfo(object):
         return self.__port
 
         
-
+######################################################################
+#
+######################################################################
 class GVComm(mixins._DeviceInfo):
     '''
     Main entry point for the GreenVulcano Communication Library for IoT.
@@ -80,20 +85,24 @@ class GVComm(mixins._DeviceInfo):
         mixins._DeviceInfo.__init__(self, device_info)
         self.__transport = transport
         self.__protocol= protocol
- 
-    def send_device_info(self):
-        self.__protocol.send_device_info()
+        
+    def add_device(self):
+        self.__protocol.add_device()
+
+    def send_device_status(self, status):
+        self.__protocol.send_device_status(status)
     
-    def send_sensor_config(self, id_, name, type_):
-        self.__protocol.send_sensor_config(id_, name, type_)
+    def add_sensor(self, id_, name, type_):
+        self.__protocol.add_sensor(id_, name, type_)
     
-    def send_actuator_config(self, id_, name, type_, topic, callback=None):
-        self.__protocol.send_actuator_config(id_, name, type_, topic)
-        if callback:
-            self.add_callback(topic, callback) 
+    def add_actuator(self, id_, name, type_, callback):
+        topic = self.__protocol.SERVICES["actuators"] % {'device_id': self.device_info.id, 'actuator_id': id_}
+
+        self.__protocol.add_actuator(id_, name, type_, topic)
+        self.add_callback(topic, callback) 
     
-    def send_sensor_data(self, id_, value):
-        self.__protocol.send_sensor_data(id_, value)
+    def send_data(self, id_, value):
+        self.__protocol.send_data(id_, value)
 
     def add_callback(self, topic, cb):
         self.__transport.subscribe(topic, cb)
@@ -104,9 +113,9 @@ class GVComm(mixins._DeviceInfo):
     def shutdown(self):
         self.__transport.shutdown()
 
-
-
-
+######################################################################
+#
+######################################################################
 class Transport(metaclass=abc.ABCMeta):
     '''
     Abstract base class for transport implementation.
@@ -159,20 +168,21 @@ class Transport(metaclass=abc.ABCMeta):
 
     __EMPTY_SET = set()
 
-
-
+######################################################################
+#
+######################################################################
 class Protocol(metaclass=abc.ABCMeta):
     def __init__(self, transport):
         self._transport = transport
         
     @abc.abstractclassmethod
-    def send_device_info(self): pass
+    def add_device(self): pass
     
     @abc.abstractclassmethod
-    def send_sensor_config(self, id_, name, type_): pass
+    def add_sensor(self, id_, name, type_): pass
     
     @abc.abstractclassmethod
-    def send_actuator_config(self, id_, name, type_, topic): pass    
+    def add_actuator(self, id_, name, type_, topic): pass    
     
     @abc.abstractclassmethod
-    def send_sensor_data(self, id_, value): pass
+    def send_data(self, id_, value): pass
