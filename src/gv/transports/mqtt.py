@@ -34,23 +34,32 @@ import paho.mqtt.client as mqtt
 #
 ######################################################################
 class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
+    
     def __init__(self, device_info, server, port, clean_session=True, credentials=None, loop_wait_sec=0.1):
+        self.__device_info = device_info
+        self.__server = server
+        self.__port = port
+        self.__clean_session = clean_session
+        self.__credentials = credentials
+        self.__loop_wait_sec = loop_wait_sec
         
         Transport.__init__(self)
         _DeviceInfo.__init__(self, device_info)
         _ServerAndPort.__init__(self, server, port)
         
-        self.__loop_wait_sec = loop_wait_sec
         client = mqtt.Client(device_info.id, clean_session)
         
         if credentials:
             client.username_pw_set(credentials[0], credentials[1])
             
         client.on_message = self.__on_message
-        client.on_connect = self.__on_connect        
-        client.connect(server, port, bind_address=device_info.ip)
+        client.on_connect = self.__on_connect
+        client.connect(server, port, bind_address=device_info.ip)        
         
-        self.__client = client            
+        self.__client = client      
+        
+#     def connect(self):
+#         client.connect(self.__server, self.__port, bind_address=self.__device_info.ip)
     
     def send(self, service, payload):
         self.__client.publish(service, payload)

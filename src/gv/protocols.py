@@ -54,23 +54,22 @@ class GVProtocol_v1(Protocol, _DeviceInfo):
         payload = '{"nm":"%s","ip":"%s","prt":"%d"}' % (self.device_info.name, self.device_info.ip, self.device_info.port)        
         self._transport.send(topic, payload)
         
-#     def send_device_status(self, status):
-#         payload =  '{"status": "%s"}' % (istatus)
-#         topic = self.SERVICES['status'] % {'device_id': self.device_info.id }
-#         self._transport.send(topic, payload)
+    def send_status(self, status):
+        payload =  '{"status": "%s"}' % (istatus)
+        topic = self.SERVICES['status'] % {'device_id': self.device_info.id }
+        self._transport.send(topic, payload)
 
     def add_sensor(self, id_, name, type_):
         topic = self.SERVICES['sensors'] % {'device_id': self.device_info.id, 'sensor_id': id_}
         payload =  '{"nm":"%s","tp":"%s"}' % (name, type_)
         self._transport.send(topic, payload)
 
-    def add_actuator(self, id_, name, type_, topic):
+    def add_actuator(self, id_, name, type_):
         topic = self.SERVICES['actuators'] % {'device_id': self.device_info.id, 'actuator_id': id_}
-        payload =  '{"nm":"%s","tp":"%s","to":"%s"}' % (name, type_, topic)
+        payload =  '{"nm":"%s","tp":"%s"}' % (name, type_)
         self._transport.send(topic, payload)
     
     def send_data(self, id_, val):
         topic = self.SERVICES['data'] % {'device_id': self.device_info.id, 'sensor_id': id_}
         payload = '{value:"%s"}' % (str(val))
         self._transport.send(topic, payload)
-        

@@ -98,7 +98,7 @@ class GVComm(mixins._DeviceInfo):
     def add_actuator(self, id_, name, type_, callback):
         topic = self.__protocol.SERVICES["actuators"] % {'device_id': self.device_info.id, 'actuator_id': id_}
 
-        self.__protocol.add_actuator(id_, name, type_, topic)
+        self.__protocol.add_actuator(id_, name, type_)
         self.add_callback(topic, callback) 
     
     def send_data(self, id_, value):
