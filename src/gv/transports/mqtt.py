@@ -27,6 +27,7 @@ MQTT Transport Implementation
 
 from ..gvlib import Transport
 from ..mixins import _ServerAndPort, _DeviceInfo
+from ..protocols import GVProtocol_v1
 
 import paho.mqtt.client as mqtt
 
@@ -49,6 +50,10 @@ class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
         
         client = mqtt.Client(device_info.id, clean_session)
         
+        topic = GVProtocol_v1.SERVICES['status'] %{'device_id': device_info.id}
+        payload = '{"value":false}'
+        client.will_set(topic, payload, 1, False)
+        
         if credentials:
             client.username_pw_set(credentials[0], credentials[1])
             
@@ -57,10 +62,7 @@ class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
         client.connect(server, port, bind_address=device_info.ip)        
         
         self.__client = client      
-        
-#     def connect(self):
-#         client.connect(self.__server, self.__port, bind_address=self.__device_info.ip)
-    
+
     def send(self, service, payload):
         self.__client.publish(service, payload)
     
@@ -76,18 +78,23 @@ class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
     def __on_connect(self, client, userdata, flags, rc):
         '''
         Called when the broker responds to our connection request.        
-            client: the client instance for this callback
-            userdata: the private user data as set in Client() or userdata_set()
-            flags: response flags sent by the brokerConnected with result code "+str(rc)
-            rc: the connection result
-                0: Connection successful 
-                1: Connection refused - incorrect protocol version 
-                2: Connection refused - invalid client identifier 
-                3: Connection refused - server unavailable 
-                4: Connection refused - bad username or password 
-                5: Connection refused - not authorised
+        client: the client instance for this callback
+        userdata: the private user data as set in Client() or userdata_set()
+        flags: response flags sent by the brokerConnected with result code "+str(rc)
+        rc: the connection result
+            0: Connection successful 
+            1: Connection refused - incorrect protocol version 
+            2: Connection refused - invalid client identifier 
+            3: Connection refused - server unavailable 
+            4: Connection refused - bad username or password 
+            5: Connection refused - not authorised
         '''
-        pass
+        if rc == 0:
+            topic = GVProtocol_v1.SERVICES['status'] %{'device_id': self.__device_info.id}
+            payload = '{"value":true}'
+            self.send(topic, payload)
+        else:
+            print("Not connected. Cause: " + str(rc))
 
     def __on_message(self, client, userdata, msg):
         self.callback(msg.topic, msg.payload)
