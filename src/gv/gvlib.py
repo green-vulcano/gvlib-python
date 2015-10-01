@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this software. If not, see <http://www.gnu.org/licenses/>.
+from gc import callbacks
 
 
 '''
@@ -26,9 +27,7 @@ Main Library Module
 @change: 2015-07-24 - First version
 '''
 
-
 import abc
-
 from . import mixins
 
 ######################################################################
@@ -64,7 +63,6 @@ class DeviceInfo(object):
     def port(self):
         '''The port on which this device wishes to be contacted back.'''
         return self.__port
-
         
 ######################################################################
 #
@@ -86,8 +84,11 @@ class GVComm(mixins._DeviceInfo):
         self.__transport = transport
         self.__protocol= protocol
         
-    def add_device(self):
+    def add_device(self, callback=None):
         self.__protocol.add_device()
+        if callback:
+            topic = self.__protocol.SERVICES["devices_input"] % {'device_id': self.device_info.id}
+            self.add_callback(topic, callback) 
 
     def send_device_status(self, status):
         self.__protocol.send_device_status(status)
@@ -96,8 +97,7 @@ class GVComm(mixins._DeviceInfo):
         self.__protocol.add_sensor(id_, name, type_)
     
     def add_actuator(self, id_, name, type_, callback):
-        topic = self.__protocol.SERVICES["actuators"] % {'device_id': self.device_info.id, 'actuator_id': id_}
-
+        topic = self.__protocol.SERVICES["actuators_input"] % {'device_id': self.device_info.id, 'actuator_id': id_}
         self.__protocol.add_actuator(id_, name, type_)
         self.add_callback(topic, callback) 
     

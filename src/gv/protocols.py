@@ -39,8 +39,10 @@ class GVProtocol_v1(Protocol, _DeviceInfo):
         
     SERVICES = {
         'devices'  : '/devices/%(device_id)s',
+        'devices_input'  : '/devices/%(device_id)s/input',
         'sensors'  : '/devices/%(device_id)s/sensors/%(sensor_id)s',
-        'actuators': '/devices/%(device_id)s/actuators/%(actuator_id)s/input',
+        'actuators': '/devices/%(device_id)s/actuators/%(actuator_id)s',
+        'actuators_input': '/devices/%(device_id)s/actuators/%(actuator_id)s/input',
         'data'     : '/devices/%(device_id)s/sensors/%(sensor_id)s/output',
         'status'   : '/devices/%(device_id)s/status'
     }
