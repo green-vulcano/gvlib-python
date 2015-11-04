@@ -52,7 +52,7 @@ class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
         
         topic = GVProtocol_v1.SERVICES['status'] %{'device_id': device_info.id}
         payload = '{"value":false}'
-        client.will_set(topic, payload, 1, False)
+        client.will_set(topic, payload, 1, True)
         
         if credentials:
             client.username_pw_set(credentials[0], credentials[1])
@@ -64,7 +64,7 @@ class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
         self.__client = client      
 
     def send(self, service, payload):
-        self.__client.publish(service, payload)
+        self.__client.publish(service, payload, qos=1, retain=True)
     
     def poll(self):
         self.__client.loop(self.__loop_wait_sec)
