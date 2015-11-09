@@ -51,7 +51,7 @@ class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
         client = mqtt.Client(device_info.id, clean_session)
         
         topic = GVProtocol_v1.SERVICES['status'] %{'device_id': device_info.id}
-        payload = '{"value":false}'
+        payload = '{"st":false}'
         client.will_set(topic, payload, 1, True)
         
         if credentials:
@@ -63,8 +63,8 @@ class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
         
         self.__client = client      
 
-    def send(self, service, payload):
-        self.__client.publish(service, payload, qos=1, retain=True)
+    def send(self, service, payload, qos=0, retain=False):
+        self.__client.publish(service, payload, qos, retain)
     
     def poll(self):
         self.__client.loop(self.__loop_wait_sec)
@@ -91,8 +91,8 @@ class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
         '''
         if rc == 0:
             topic = GVProtocol_v1.SERVICES['status'] %{'device_id': self.__device_info.id}
-            payload = '{"value":true}'
-            self.send(topic, payload)
+            payload = '{"st":true}'
+            self.send(topic, payload, 1, True)
         else:
             print("Not connected. Cause: " + str(rc))
 

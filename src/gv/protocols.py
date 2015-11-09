@@ -57,9 +57,9 @@ class GVProtocol_v1(Protocol, _DeviceInfo):
         self._transport.send(topic, payload)
         
     def send_status(self, status):
-        payload =  '{"status": "%s"}' % (istatus)
+        payload =  '{"st": "%s"}' % (istatus)
         topic = self.SERVICES['status'] % {'device_id': self.device_info.id }
-        self._transport.send(topic, payload)
+        self._transport.send(topic, payload, 1, True)
 
     def add_sensor(self, id_, name, type_):
         topic = self.SERVICES['sensors'] % {'device_id': self.device_info.id, 'sensor_id': id_}
@@ -71,7 +71,7 @@ class GVProtocol_v1(Protocol, _DeviceInfo):
         payload =  '{"nm":"%s","tp":"%s"}' % (name, type_)
         self._transport.send(topic, payload)
     
-    def send_data(self, id_, val):
+    def send_data(self, id_, val, qos=0, retain=False):
         topic = self.SERVICES['data'] % {'device_id': self.device_info.id, 'sensor_id': id_}
         payload = '{value:"%s"}' % (str(val))
-        self._transport.send(topic, payload)
+        self._transport.send(topic, payload, qos, retain)
