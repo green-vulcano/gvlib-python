@@ -30,7 +30,10 @@ from ..mixins import _ServerAndPort, _DeviceInfo
 
 import httplib2
 
+
 class RestTransport(Transport, _DeviceInfo, _ServerAndPort):
+    """Implementation of `Transport` over REST/HTTP"""
+
     def __init__(self, device_info, server, port,
                  credentials=None, use_https=False, timeout=None):
         Transport.__init__(self)
@@ -51,15 +54,18 @@ class RestTransport(Transport, _DeviceInfo, _ServerAndPort):
                 headers = {
                     "Content-Type" : "application/json; charset=utf-8",
                     "Host"         : self.device_info.ip,
-                    "Connection"   : "close" ## TODO: CHANGE THIS!
+                    "Connection"   : "close"  # TODO: CHANGE THIS!
                 })
         if resp.status < 200 or resp.status > 299:
             raise self.TransportException(resp.status, resp.reason)
+
+    def _handle_connect(self):
+        pass  # Nothing specific for now - TODO: insert a connection check at least
+
+    def _handle_shutdown(self):
+        Transport._handle_shutdown(self) # no specific shutdown handling
         
-    def shutdown(self):
-        Transport.shutdown(self) # no specific shutdown handling
-        
-    ### Polling and topic subscription is not (yet) supported via REST
+    # Polling and topic subscription is not (yet) supported via REST
     
     def poll(self):
         Transport.poll(self)

@@ -26,13 +26,11 @@ Implementation of GreenVulcano protocols
 '''
 
 
-from .gvlib import Protocol
+from .gvlib import Protocol, TransportListener
 from .mixins import _DeviceInfo
 
-######################################################################
-#
-######################################################################
-class GVProtocol_v1(Protocol, _DeviceInfo):
+
+class GVProtocol_v1(Protocol, _DeviceInfo, TransportListener):
     '''
     Version 1 of the GreenVulcano Protocol for IoT communication
     '''
@@ -55,21 +53,29 @@ class GVProtocol_v1(Protocol, _DeviceInfo):
         self._transport.send(topic, payload)
         
     def send_status(self, status):
-        payload =  '{"status": "%s"}' % (istatus)
+        if isinstance(status, bool):
+            status = status and 'true' or 'false'
+        payload = '{"status": "%s"}' % status
         topic = self.SERVICES['status'] % {'device_id': self.device_info.id }
         self._transport.send(topic, payload)
 
     def add_sensor(self, id_, name, type_):
         topic = self.SERVICES['sensors'] % {'device_id': self.device_info.id, 'sensor_id': id_}
-        payload =  '{"nm":"%s","tp":"%s"}' % (name, type_)
+        payload = '{"nm":"%s","tp":"%s"}' % (name, type_)
         self._transport.send(topic, payload)
 
     def add_actuator(self, id_, name, type_):
         topic = self.SERVICES['actuators'] % {'device_id': self.device_info.id, 'actuator_id': id_}
-        payload =  '{"nm":"%s","tp":"%s"}' % (name, type_)
+        payload = '{"nm":"%s","tp":"%s"}' % (name, type_)
         self._transport.send(topic, payload)
     
     def send_data(self, id_, val):
         topic = self.SERVICES['data'] % {'device_id': self.device_info.id, 'sensor_id': id_}
         payload = '{value:"%s"}' % (str(val))
         self._transport.send(topic, payload)
+
+    def _after_connect(self, info):
+        self.send_status(True)
+
+    def _before_disconnect(self, info):
+        self.send_status(False)
