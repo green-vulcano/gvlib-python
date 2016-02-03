@@ -66,6 +66,8 @@ mqtt = MqttTransport(device_info=me, server="10.0.2.1", port=1883)
 proto = DefaultProtocol(transport=mqtt, device_info=me)
 
 comm = GVComm(device_info=me, transport=mqtt, protocol=proto)
+comm.connect()
+
 comm.add_device()
 comm.add_sensor(id_="s1", name="temp-1", type_="temperature")
 comm.add_actuator(id_="a1", name="servo-1", type_="servo", callback=servo_fun)

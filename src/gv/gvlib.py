@@ -108,7 +108,10 @@ class GVComm(mixins._DeviceInfo):
         
     def poll(self):
         self.__transport.poll()
-        
+
+    def connect(self):
+        self.__transport.connect()
+
     def shutdown(self):
         self.__transport.shutdown()
 
