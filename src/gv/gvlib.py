@@ -26,9 +26,7 @@ Main Library Module
 @change: 2015-07-24 - First version
 """
 
-
 import abc
-
 from . import mixins
 
 ######################################################################
@@ -64,7 +62,6 @@ class DeviceInfo(object):
     def port(self):
         """The port on which this device wishes to be contacted back."""
         return self.__port
-
         
 ######################################################################
 #
@@ -86,23 +83,25 @@ class GVComm(mixins._DeviceInfo):
         self.__transport = transport
         self.__protocol= protocol
         
-    def add_device(self):
+    def add_device(self, callback=None):
         self.__protocol.add_device()
+        if callback:
+            topic = self.__protocol.SERVICES["devices_input"] % {'device_id': self.device_info.id}
+            self.add_callback(topic, callback)
 
-    def send_device_status(self, status):
-        self.__protocol.send_device_status(status)
+    def send_status(self, status):
+        self.__protocol.send_status(status)
     
     def add_sensor(self, id_, name, type_):
         self.__protocol.add_sensor(id_, name, type_)
     
     def add_actuator(self, id_, name, type_, callback):
-        topic = self.__protocol.SERVICES["actuators"] % {'device_id': self.device_info.id, 'actuator_id': id_}
-
+        topic = self.__protocol.SERVICES["actuators_input"] % {'device_id': self.device_info.id, 'actuator_id': id_}
         self.__protocol.add_actuator(id_, name, type_)
         self.add_callback(topic, callback) 
     
-    def send_data(self, id_, value):
-        self.__protocol.send_data(id_, value)
+    def send_data(self, id_, value, qos=0, retain=False):
+        self.__protocol.send_data(id_, value, qos, retain)
 
     def add_callback(self, topic, cb):
         self.__transport.subscribe(topic, cb)
@@ -111,7 +110,7 @@ class GVComm(mixins._DeviceInfo):
         self.__transport.poll()
         
     def shutdown(self):
-        self.__transport._handle_shutdown()
+        self.__transport.shutdown()
 
 ######################################################################
 #
@@ -240,7 +239,7 @@ class Transport(metaclass=abc.ABCMeta):
             listener_method(lst, info)
 
     @abc.abstractclassmethod
-    def send(self, service, payload):
+    def send(self, service, payload, qos=0, retain=False):
         raise self.TransportException(lookup="NOT_IMPLEMENTED")
     
     @abc.abstractclassmethod
@@ -279,4 +278,4 @@ class Protocol(metaclass=abc.ABCMeta):
     def add_actuator(self, id_, name, type_): pass
     
     @abc.abstractclassmethod
-    def send_data(self, id_, value): pass
+    def send_data(self, id_, value, qos=0, retain=False): pass

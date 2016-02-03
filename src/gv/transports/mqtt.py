@@ -55,8 +55,8 @@ class MqttTransport(Transport, _DeviceInfo, _ServerAndPort):
         client.on_connect = self.__on_connect
         self.__client = client
 
-    def send(self, service, payload):
-        self.__client.publish(service, payload)
+    def send(self, service, payload, qos=0, retain=False):
+        self.__client.publish(service, payload, qos, retain)
     
     def poll(self):
         self.__client.loop(self.__loop_wait_sec)
