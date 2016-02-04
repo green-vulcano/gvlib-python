@@ -25,7 +25,7 @@ Main Library Package
 @change: 2015-07-24 - First version
 '''
 
-from .gvlib import GVComm, DeviceInfo
+from .gvlib import GVComm, DeviceInfo, Callback
 from .protocols import GVProtocol_v1 as DefaultProtocol
 from .transports.rest import RestTransport
 
