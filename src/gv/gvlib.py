@@ -29,9 +29,7 @@ Main Library Module
 import abc
 from . import mixins
 
-######################################################################
-#
-######################################################################
+
 class DeviceInfo(object):
     """Holds the info about a specific device (i.e. the piece of hardware
     on which this software is running).
@@ -142,15 +140,24 @@ class TransportListener(object):
 class Transport(metaclass=abc.ABCMeta):
     """
     Abstract base class for transport implementation.
+    Subclasses of `Transport` can benefit from several "reasonable" default
+    implementations, so that they only have to specify any specialized
+    behavior in order to meet a specific transport convention.
+
+    *** NOTE ***
+    It is important that `Transport` implementation *do not* automatically
+    connect upon construction. The reason for this is that objects constructed
+    after the transport may want to register as listeners *before* the
+    connection is attempted. Therefore, the only way to establish a connection
+    should be (so far) to call the method `connect()`.
     """
+
     class TransportException(Exception):
+        """Raised by methods of `Transport` when they cannot do their job."""
         ERRORS = {
             "NOT_IMPLEMENTED":
                 (-1, 'The requested method is not implemented')}
 
-        """
-        Raised by methods of `Transport` when they cannot do their job
-        """
         def __init__(self, code: int, reason: str, lookup: str = None):
             
             if lookup:
@@ -159,19 +166,36 @@ class Transport(metaclass=abc.ABCMeta):
             Exception.__init__(self, code, reason)
             self.code = code
             self.reason = reason
-            
+
     def __init__(self):
+        """Base class constructor."""
         self.__callbacks = {}
         self.__listeners = set()
 
     def connect(self):
+        """Initiates a connection to the IoT network.
+        This method delegates connection to the subclass' implementation
+        of `_handle_connect()`, then invokes
+        `TransportListener._after_connect(...)` or
+        `TransportListener._after_connection_unsuccesful(...)` depending
+        on the connection result."""
         try:
             self._handle_connect()
+            self._invoke_listeners(TransportListener._after_connect,
+                                   TransportListener.Info(self))
         except Exception as exc:
             self._invoke_listeners(TransportListener._after_connection_unsuccessful,
                                    TransportListener.Info(self, failure_reason=exc))
 
     def subscribe(self, topic: str, callback: Callback):
+        """Subscribes to a topic with a specific callback function.
+        This method delegates connection to the subclass' implementation
+        of `_handle_subscription(...)`, then invokes
+        `TransportListener._after_subscribe(...)` in case of success.
+        :param topic: the topic to subscribe to
+        :param callback: the function to call when data are received
+               on the specified topic
+        """
         if topic not in self.__callbacks:
             self.__callbacks[topic] = set()
         self.__callbacks[topic].add(callback)
@@ -180,44 +204,94 @@ class Transport(metaclass=abc.ABCMeta):
                                TransportListener.Info(self, topic=topic))
 
     def shutdown(self):
+        """Shuts down the connection to the IoT network.
+        This method invokes `TransportListener._before_disconnect(...)`,
+        then delegates to the subclass' implementation of
+        `_handle_shutdown()`.
+        """
         self._invoke_listeners(TransportListener._before_disconnect,
                                TransportListener.Info(self))
         self._handle_shutdown()
 
     def callback(self, topic: str, payload: bytearray):
+        """Invokes the callbacks registered for a specific topic
+        subscription with the provided data.
+        :param topic: the topic for which to invoke callbacks
+        :param payload: the data to pass to the callback chain
+        """
         s = self.__callbacks.get(topic) or self.__EMPTY_SET
         for cb in s:
             payload = cb(payload)
 
     def add_listener(self, listener: TransportListener):
+        """Registers a new `TransportListener` for this transport.
+        Listeners can only be registered once for each transport
+        (i.e. two calls to this method will not result in the
+        listener being called twice).
+        :param listener: the listener to register
+        """
         self.__listeners.add(listener)
 
     def remove_listener(self, listener: TransportListener):
+        """Unregisters a `TransportListener` for this transport.
+        :param listener: the listener to unregister.
+        """
         self.__listeners.remove(listener)
 
     def _invoke_listeners(self, listener_method, info: TransportListener.Info):
+        """Convenience method to invoke a method on all transport listeners.
+        :param listener_method: the method to invoke on all listeners
+        :param info: the information object to pass to the listeners
+        """
         for lst in self.__listeners:
             listener_method(lst, info)
 
     @abc.abstractclassmethod
     def send(self, service: str, payload: bytearray,
              qos: int = 0, retain: bool = False):
+        """Sends data to a specific service.
+        :param service: the service to invoke on the receiver's side
+        :param payload: the data to send
+        :param qos: quality of service for the delivery of the message:
+                    0 = at most once
+                    1 = at least once
+                    2 = exactly once
+        :param retain: `True` if the message must be retained
+                       for durable subscribers, `False` otherwise
+        """
         raise self.TransportException(lookup="NOT_IMPLEMENTED")
     
     @abc.abstractclassmethod
     def poll(self):
+        """Fetches new data from the IoT network.
+        If data are available, calls the appropriate callbacks
+        (using the `Transport.callback(...)` method). Only needed
+        for non-reactive transports (e.g. REST over simple HTTP(S)).
+        """
         raise self.TransportException(lookup="NOT_IMPLEMENTED")
 
     @abc.abstractclassmethod
     def _handle_connect(self):
+        """To be implemented by subclasses to handle specific details
+         of the connection establishment for the given transport.
+        """
         pass  # no need to complain, just skip
 
     @abc.abstractclassmethod
     def _handle_shutdown(self):
+        """To be implemented by subclasses to handle specific details
+         of the connection shutdown for the given transport.
+        """
         pass  # no need to complain, just skip
     
     @abc.abstractclassmethod
     def _handle_subscription(self, topic: str, callback: Callback):
+        """To be implemented by subclasses to handle the specific details
+        of topic subscription for the given transport.
+        :param topic: the topic to subscribe to
+        :param callback: the callback to invoke when data are received for
+                         the specified topic
+        """
         raise self.TransportException(lookup="NOT_IMPLEMENTED")
 
     __EMPTY_SET = set()
@@ -319,6 +393,7 @@ class GVComm(mixins._DeviceInfo):
 
     def poll(self):
         """Fetches new data from the IoT network.
+        If data are available, calls the appropriate callbacks.
         Only needed for non-reactive transports (e.g. REST over simple
         HTTP(S)),
         """

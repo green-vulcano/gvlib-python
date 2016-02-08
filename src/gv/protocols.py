@@ -48,6 +48,7 @@ class GVProtocol_v1(Protocol, _DeviceInfo, TransportListener):
     def __init__(self, transport, device_info):
         Protocol.__init__(self, transport)
         _DeviceInfo.__init__(self, device_info)
+        self._transport.add_listener(self)
     
     def add_device(self):
         topic = self.SERVICES['devices'] %{'device_id': self.device_info.id}
